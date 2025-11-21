@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NeuroRead Pro - Advanced PDF Navigation</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-brain"></i>
+                    <h1>NeuroRead Pro</h1>
+                </div>
+                <div class="header-actions">
+                    <div class="status-indicator" id="statusIndicator">
+                        <div class="status-dot"></div>
+                        <span id="statusText">Ready</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section -->
+            <section class="upload-section card">
+                <div class="section-header">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h2>Upload Document</h2>
+                </div>
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="pdfFile" accept=".pdf" hidden>
+                    <div class="upload-placeholder">
+                        <div class="upload-icon">
+                            <i class="fas fa-file-pdf"></i>
+                        </div>
+                        <h3>Drag & Drop PDF File</h3>
+                        <p>or click to browse</p>
+                        <div class="upload-features">
+                            <span><i class="fas fa-check"></i> Max 16MB</span>
+                            <span><i class="fas fa-check"></i> Secure Upload</span>
+                        </div>
+                    </div>
+                    <div class="upload-progress" id="uploadProgress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill"></div>
+                        </div>
+                        <span>Uploading...</span>
+                    </div>
+                </div>
+                <div id="uploadStatus" class="status-message"></div>
+            </section>
+
+            <!-- Control Selection -->
+            <section class="control-section card">
+                <div class="section-header">
+                    <i class="fas fa-magic"></i>
+                    <h2>Choose Navigation Method</h2>
+                </div>
+                <div class="control-options">
+                    <div class="control-option" data-control="eye_gaze">
+                        <div class="control-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <div class="control-content">
+                            <h3>Eye Gaze Control</h3>
+                            <p>Navigate using natural eye movements</p>
+                            <div class="control-features">
+                                <div class="feature">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>Look Up - First Page</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span>Look Down - Last Page</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-arrow-left"></i>
+                                    <span>Look Left - Previous</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-arrow-right"></i>
+                                    <span>Look Right - Next</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="control-badge">AI Powered</div>
+                    </div>
+
+                    <div class="control-option" data-control="hand_gesture">
+                        <div class="control-icon">
+                            <i class="fas fa-hand-pointer"></i>
+                        </div>
+                        <div class="control-content">
+                            <h3>Hand Gesture Control</h3>
+                            <p>Intuitive gesture-based navigation</p>
+                            <div class="control-features">
+                                <div class="feature">
+                                    <i class="fas fa-hand-rock"></i>
+                                    <span>🤏 Pinch - Zoom Mode</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-hand-peace"></i>
+                                    <span>✌️ Peace - Turn Pages</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-arrows-alt-h"></i>
+                                    <span>Swipe - Navigate</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="control-badge">Motion Sensing</div>
+                    </div>
+
+                    <div class="control-option" data-control="voice">
+                        <div class="control-icon">
+                            <i class="fas fa-microphone"></i>
+                        </div>
+                        <div class="control-content">
+                            <h3>Voice Assistant</h3>
+                            <p>Hands-free voice commands</p>
+                            <div class="control-features">
+                                <div class="feature">
+                                    <i class="fas fa-volume-up"></i>
+                                    <span>"Next Page" - Forward</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-volume-up"></i>
+                                    <span>"Previous Page" - Back</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-volume-up"></i>
+                                    <span>"Page 5" - Jump to</span>
+                                </div>
+                                <div class="feature">
+                                    <i class="fas fa-volume-up"></i>
+                                    <span>"First/Last" - Navigate</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="control-badge">Voice AI</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Action Section -->
+            <section class="action-section card">
+                <div class="action-buttons">
+                    <button id="startBtn" class="btn btn-primary btn-lg" disabled>
+                        <i class="fas fa-play"></i>
+                        Start Control
+                    </button>
+                    <button id="stopBtn" class="btn btn-secondary btn-lg" disabled>
+                        <i class="fas fa-stop"></i>
+                        Stop Control
+                    </button>
+                </div>
+                <div class="control-status" id="controlStatus">
+                    <div class="status-info">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Select a control method and click Start</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PDF Viewer -->
+            <section class="viewer-section card" id="viewerSection" style="display: none;">
+                <div class="viewer-header">
+                    <h2>
+                        <i class="fas fa-book-open"></i>
+                        Document Viewer
+                    </h2>
+                    <div class="viewer-actions">
+                        <button id="fitToScreenBtn" class="btn btn-outline" title="Fit to Screen">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button id="fullscreenBtn" class="btn btn-outline" title="Fullscreen">
+                            <i class="fas fa-maximize"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="viewer-controls">
+                    <button id="firstBtn" class="btn btn-outline" title="First Page">
+                        <i class="fas fa-fast-backward"></i>
+                    </button>
+                    <button id="prevBtn" class="btn btn-outline" title="Previous Page">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    
+                    <div class="page-info">
+                        <span id="pageInfo">Page 1 of 1</span>
+                        <div class="page-input">
+                            <input type="number" id="pageInput" min="1" value="1">
+                            <span>/ <span id="totalPages">1</span></span>
+                        </div>
+                    </div>
+                    
+                    <button id="nextBtn" class="btn btn-outline" title="Next Page">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button id="lastBtn" class="btn btn-outline" title="Last Page">
+                        <i class="fas fa-fast-forward"></i>
+                    </button>
+                </div>
+
+                <div class="pdf-viewer-container">
+                    <div class="pdf-viewer" id="pdfViewer">
+                        <div class="loading-spinner" id="loadingSpinner">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading page...</p>
+                        </div>
+                        <img id="pdfImage" src="" alt="PDF Page">
+                    </div>
+                </div>
+
+                <div class="viewer-footer">
+                    <div class="zoom-controls">
+                        <button id="zoomOutBtn" class="btn btn-outline" title="Zoom Out">
+                            <i class="fas fa-search-minus"></i>
+                        </button>
+                        <span id="zoomLevel">100%</span>
+                        <button id="zoomInBtn" class="btn btn-outline" title="Zoom In">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                    </div>
+                    <div class="document-info">
+                        <span id="documentName">No document loaded</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Status Toast -->
+        <div id="statusToast" class="status-toast">
+            <div class="toast-content">
+                <i class="toast-icon"></i>
+                <span class="toast-message"></span>
+            </div>
+        </div>
+
+        <!-- Camera Feed Overlay -->
+        <div id="cameraOverlay" class="camera-overlay">
+            <div class="camera-header">
+                <h3>Control Camera Feed</h3>
+                <button id="closeCamera" class="btn btn-outline btn-sm">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="camera-feed">
+                <img id="cameraFeed" src="" alt="Camera Feed">
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

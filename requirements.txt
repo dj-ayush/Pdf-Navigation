@@ -1,0 +1,8 @@
+flask==2.3.3
+opencv-python==4.8.1.78
+mediapipe==0.10.14
+PyMuPDF==1.23.8
+numpy==1.24.3
+pillow==10.0.1
+speechrecognition==3.10.0
+pyaudio==0.2.11
