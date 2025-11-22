@@ -128,8 +128,7 @@ def create_app():
                 current_controller = HandGestureController(shared_state.pdf_path, shared_state)
 
             elif ctype == "voice":
-                current_controller = SimpleVoiceAssistant(shared_state.pdf_path, shared_state)
-
+                current_controller = VoiceAssistantController(shared_state.pdf_path, shared_state)
             else:
                 return jsonify({"success": False, "error": "Invalid control type"})
 
