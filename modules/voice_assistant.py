@@ -10,7 +10,7 @@ from speech_recognition import WaitTimeoutError, UnknownValueError
 
 class VoiceAssistantController:
     """
-    Microphone-based voice controller for PDF navigation.
+    Microphone-based voice controller for PDF navigation and zoom.
 
     Start: VoiceAssistantController(pdf_path, shared_state).start()
     Stop : .stop()
@@ -23,6 +23,7 @@ class VoiceAssistantController:
       - "page 5", "go to page 10"
       - "jump forward 3 pages", "jump back 2 pages"
       - "middle", "center", "halfway"
+      - "zoom in", "zoom out", "zoom 150%", "zoom 100%", "back to normal"
       - "status", "where am I"
       - "repeat" (repeat last successful nav command)
       - "help"
@@ -57,6 +58,7 @@ class VoiceAssistantController:
         print("   • 'first page', 'last page'")
         print("   • 'jump forward 3 pages'")
         print("   • 'middle' / 'center'")
+        print("   • 'zoom in', 'zoom out', 'zoom 150%', 'back to normal'")
         print("   • 'status' / 'where am I'")
         print("   • 'quit' / 'stop'")
         print("💡 Tip: Pause briefly between commands.\n")
@@ -137,9 +139,15 @@ class VoiceAssistantController:
 
         # --------- STATUS ----------
         if "status" in t or "where am i" in t or "which page" in t:
+            current_zoom = self.shared_state.get_zoom()
             print(
-                f"📊 You are on page {current_page + 1} of {total}"
+                f"📊 You are on page {current_page + 1} of {total}, Zoom: {current_zoom}%"
             )
+            return
+
+        # --------- ZOOM COMMANDS ----------
+        if "zoom" in t:
+            self._handle_zoom_commands(t)
             return
 
         # --------- REPEAT ----------
@@ -230,6 +238,42 @@ class VoiceAssistantController:
         self._apply_page_change(current_page, new_page)
 
     # -------------------------------------------------------
+    def _handle_zoom_commands(self, text: str):
+        """Handle zoom-related voice commands"""
+        current_zoom = self.shared_state.get_zoom()
+        
+        if "zoom in" in text:
+            new_zoom = min(500, current_zoom + 25)
+            self.shared_state.update_zoom(new_zoom)
+            print(f"🔍 Zoom IN → {new_zoom}%")
+            
+        elif "zoom out" in text:
+            new_zoom = max(25, current_zoom - 25)
+            self.shared_state.update_zoom(new_zoom)
+            print(f"🔎 Zoom OUT → {new_zoom}%")
+            
+        elif "back to normal" in text or "normal zoom" in text or "reset zoom" in text:
+            new_zoom = self.shared_state.reset_zoom()
+            print(f"🔄 Zoom reset → {new_zoom}%")
+            
+        elif "zoom 100" in text or "hundred percent" in text:
+            new_zoom = self.shared_state.reset_zoom()
+            print(f"🔢 Zoom 100% → {new_zoom}%")
+            
+        else:
+            # Try to extract percentage from command
+            zoom_match = re.search(r'zoom\s+(\d+)%?', text)
+            if zoom_match:
+                zoom_value = int(zoom_match.group(1))
+                if 25 <= zoom_value <= 500:
+                    new_zoom = self.shared_state.update_zoom(zoom_value)
+                    print(f"🎯 Zoom set → {new_zoom}%")
+                else:
+                    print("❌ Zoom must be between 25% and 500%")
+            else:
+                print("❓ Unknown zoom command. Try 'zoom in', 'zoom out', or 'zoom 150%'")
+
+    # -------------------------------------------------------
     def _apply_page_change(self, current_page, new_page):
         if new_page == current_page:
             print(f"ℹ️ Already on page {current_page + 1}")
@@ -252,6 +296,11 @@ class VoiceAssistantController:
         print("  • 'page 5', 'go to page 10'")
         print("  • 'jump forward 3 pages', 'jump back 2 pages'")
         print("  • 'middle', 'center', 'halfway'")
+        print("")
+        print("Zoom Controls:")
+        print("  • 'zoom in', 'zoom out'")
+        print("  • 'zoom 150%', 'zoom 200%'")
+        print("  • 'back to normal', 'reset zoom', 'zoom 100%'")
         print("")
         print("Utility:")
         print("  • 'status' / 'where am I'")

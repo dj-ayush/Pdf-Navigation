@@ -1,5 +1,3 @@
-# modules/hand_gesture.py
-
 import cv2
 import numpy as np
 import mediapipe as mp
@@ -10,7 +8,7 @@ import time
 
 class HandGestureController:
     """
-    Enhanced hand-gesture controller for page navigation and zoom hints.
+    Enhanced hand-gesture controller for page navigation and zoom.
 
     Modes:
       - "none"  : no specific gesture detected
@@ -47,6 +45,8 @@ class HandGestureController:
         self.last_zoom_direction = None
         self.last_zoom_time = 0
         self.ZOOM_COOLDOWN = 0.35       # seconds between zoom actions
+        self.zoom_gesture_start_time = None
+        self.zoom_gesture_cooldown = 0.5  # relax time between zoom gestures
 
         self.is_running = False
         self.thread = None
@@ -89,6 +89,7 @@ class HandGestureController:
                     self.current_mode = "zoom"
                     self.zoom_baseline_dist = thumb_index_dist
                     self.last_zoom_direction = None
+                    self.zoom_gesture_start_time = time.time()
                     print("🔍 Zoom mode activated")
 
             # Turn mode: index & middle close, thumb away
@@ -109,6 +110,7 @@ class HandGestureController:
                 self.turn_start = None
                 self.zoom_baseline_dist = None
                 self.last_zoom_direction = None
+                self.zoom_gesture_start_time = None
 
             # -----------------------------
             # Handle modes
@@ -142,6 +144,15 @@ class HandGestureController:
                 frame,
                 f"Page: {self.shared_state.get_page() + 1}/{self.shared_state.total_pages}",
                 (10, 60),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (255, 255, 255),
+                2,
+            )
+            cv2.putText(
+                frame,
+                f"Zoom: {self.shared_state.get_zoom()}%",
+                (10, 90),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.6,
                 (255, 255, 255),
@@ -223,6 +234,12 @@ class HandGestureController:
             return
 
         current_time = time.time()
+        
+        # Check relax time between zoom gestures
+        if (self.zoom_gesture_start_time and 
+            current_time - self.zoom_gesture_start_time < self.zoom_gesture_cooldown):
+            return
+            
         if current_time - self.last_zoom_time < self.ZOOM_COOLDOWN:
             return
 
@@ -234,17 +251,24 @@ class HandGestureController:
         if ratio > self.ZOOM_SENSITIVITY:
             # fingers moved AWAY → Zoom OUT
             if self.last_zoom_direction != "out":
-                print("🔎 Zoom OUT gesture detected")
-                # here you could integrate with a zoom shared_state if needed
+                current_zoom = self.shared_state.get_zoom()
+                new_zoom = min(500, current_zoom + 25)  # Increase by 25%
+                self.shared_state.update_zoom(new_zoom)
+                print(f"🔎 Zoom OUT → {new_zoom}%")
                 self.last_zoom_direction = "out"
                 self.last_zoom_time = current_time
+                self.zoom_gesture_start_time = current_time
 
         elif ratio < -self.ZOOM_SENSITIVITY:
             # fingers moved CLOSER → Zoom IN
             if self.last_zoom_direction != "in":
-                print("🔍 Zoom IN gesture detected")
+                current_zoom = self.shared_state.get_zoom()
+                new_zoom = max(25, current_zoom - 25)  # Decrease by 25%
+                self.shared_state.update_zoom(new_zoom)
+                print(f"🔍 Zoom IN → {new_zoom}%")
                 self.last_zoom_direction = "in"
                 self.last_zoom_time = current_time
+                self.zoom_gesture_start_time = current_time
 
         # small adjustments → ignore (avoid flicker)
 
@@ -269,6 +293,8 @@ class HandGestureController:
         print("✋ Open Hand          → Neutral/reset")
         print("➡️ Swipe RIGHT  (in turn mode) → Previous Page")
         print("⬅️ Swipe LEFT   (in turn mode) → Next Page")
+        print("➕ Pinch OUT (fingers apart)   → Zoom Out")
+        print("➖ Pinch IN  (fingers closer)  → Zoom In")
         print("⏹️ Press 'Q' to quit window\n")
 
         while self.is_running:

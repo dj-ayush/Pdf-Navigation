@@ -2,6 +2,7 @@ import threading
 import time
 import sys
 import os
+import re
 from modules.shared_state import shared_state
 
 class SimpleVoiceAssistant:
@@ -67,6 +68,11 @@ class SimpleVoiceAssistant:
             if 0 <= page_num < self.shared_state.total_pages:
                 new_page = page_num
                 print(f"📖 Jumping to page {page_num + 1}")
+
+        # Zoom commands
+        elif "zoom" in command_lower:
+            self._handle_zoom_commands(command_lower)
+            return
 
         # Navigation commands
         elif command_lower in ['n', 'next']:
@@ -135,6 +141,41 @@ class SimpleVoiceAssistant:
             else:
                 print("❌ Failed to change page")
 
+    def _handle_zoom_commands(self, text: str):
+        """Handle zoom-related commands"""
+        current_zoom = self.shared_state.get_zoom()
+        
+        if "zoom in" in text:
+            new_zoom = min(500, current_zoom + 25)
+            self.shared_state.update_zoom(new_zoom)
+            print(f"🔍 Zoom IN → {new_zoom}%")
+            
+        elif "zoom out" in text:
+            new_zoom = max(25, current_zoom - 25)
+            self.shared_state.update_zoom(new_zoom)
+            print(f"🔎 Zoom OUT → {new_zoom}%")
+            
+        elif "back to normal" in text or "normal zoom" in text or "reset zoom" in text:
+            new_zoom = self.shared_state.reset_zoom()
+            print(f"🔄 Zoom reset → {new_zoom}%")
+            
+        elif "zoom 100" in text or "hundred percent" in text:
+            new_zoom = self.shared_state.reset_zoom()
+            print(f"🔢 Zoom 100% → {new_zoom}%")
+            
+        else:
+            # Try to extract percentage from command
+            zoom_match = re.search(r'zoom\s+(\d+)%?', text)
+            if zoom_match:
+                zoom_value = int(zoom_match.group(1))
+                if 25 <= zoom_value <= 500:
+                    new_zoom = self.shared_state.update_zoom(zoom_value)
+                    print(f"🎯 Zoom set → {new_zoom}%")
+                else:
+                    print("❌ Zoom must be between 25% and 500%")
+            else:
+                print("❓ Unknown zoom command. Try 'zoom in', 'zoom out', or 'zoom 150%'")
+
     def show_help(self):
         """Show help information"""
         print("\n" + "="*60)
@@ -146,6 +187,12 @@ class SimpleVoiceAssistant:
         print("  p, prev      - Previous page")
         print("  f, first     - First page")
         print("  l, last      - Last page")
+        
+        print("\n🔍 ZOOM CONTROLS:")
+        print("  zoom in      - Zoom in by 25%")
+        print("  zoom out     - Zoom out by 25%")
+        print("  zoom 150%    - Set zoom to 150%")
+        print("  back to normal - Reset to 100% zoom")
         
         print("\n🎯 VOICE-LIKE COMMANDS:")
         print("  'next page'  - Next page")
